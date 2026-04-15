@@ -1,0 +1,50 @@
+# Build output
+build/
+build-*/
+out/
+cmake-build-*/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+Testing/
+
+# Object/binary artifacts
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+
+# IDE / editor
+.vscode/
+.idea/
+.vs/
+*.swp
+*.swo
+.cache/
+.DS_Store
+
+# Android / Gradle
+.gradle/
+local.properties
+*.iml
+.externalNativeBuild/
+.cxx/
+
+# ROMs and save data — never commit
+*.gba
+*.gb
+*.gbc
+*.nds
+saves/
+states/
