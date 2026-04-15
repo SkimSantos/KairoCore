@@ -4,20 +4,24 @@
 
 namespace kairo::linux_sdl {
 
+SdlInput::SdlInput() {
+    using kairo::platform::InputAction;
+    mapper_.set_binding(InputAction::up,     SDL_SCANCODE_UP);
+    mapper_.set_binding(InputAction::down,   SDL_SCANCODE_DOWN);
+    mapper_.set_binding(InputAction::left,   SDL_SCANCODE_LEFT);
+    mapper_.set_binding(InputAction::right,  SDL_SCANCODE_RIGHT);
+    mapper_.set_binding(InputAction::a,      SDL_SCANCODE_Z);
+    mapper_.set_binding(InputAction::b,      SDL_SCANCODE_X);
+    mapper_.set_binding(InputAction::l,      SDL_SCANCODE_A);
+    mapper_.set_binding(InputAction::r,      SDL_SCANCODE_S);
+    mapper_.set_binding(InputAction::start,  SDL_SCANCODE_RETURN);
+    mapper_.set_binding(InputAction::select, SDL_SCANCODE_BACKSPACE);
+}
+
 kairo::core::InputState SdlInput::poll() {
-    const Uint8* keys = SDL_GetKeyboardState(nullptr);
-    kairo::core::InputState s{};
-    s.up     = keys[SDL_SCANCODE_UP];
-    s.down   = keys[SDL_SCANCODE_DOWN];
-    s.left   = keys[SDL_SCANCODE_LEFT];
-    s.right  = keys[SDL_SCANCODE_RIGHT];
-    s.a      = keys[SDL_SCANCODE_Z];
-    s.b      = keys[SDL_SCANCODE_X];
-    s.l      = keys[SDL_SCANCODE_A];
-    s.r      = keys[SDL_SCANCODE_S];
-    s.start  = keys[SDL_SCANCODE_RETURN];
-    s.select = keys[SDL_SCANCODE_BACKSPACE];
-    return s;
+    int numkeys = 0;
+    const Uint8* keys = SDL_GetKeyboardState(&numkeys);
+    return mapper_.build_input_state(keys, numkeys);
 }
 
 } // namespace kairo::linux_sdl

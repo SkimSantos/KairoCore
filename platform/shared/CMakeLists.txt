@@ -1,6 +1,7 @@
 add_library(kairo_platform_shared STATIC
     src/input_mapper.cpp
     src/logger.cpp
+    src/settings_store.cpp
 )
 
 target_include_directories(kairo_platform_shared PUBLIC include)
