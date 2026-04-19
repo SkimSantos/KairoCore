@@ -148,11 +148,18 @@ int main() {
         EmulatorInstance emu(nullptr, nullptr);
         // Force a rom_id so states get filtered correctly on reload.
         // load_rom is the public way; use a writable scratch file.
+        // Cart loader requires >= 192 bytes. Write a minimal valid
+        // ROM — header bytes can be zero, only the size matters here.
+        const auto write_dummy_rom = [](const std::filesystem::path& p,
+                                        char marker) {
+            std::vector<char> bytes(192, 0);
+            bytes[0] = marker;
+            std::ofstream out(p, std::ios::binary);
+            out.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
+        };
+
         const auto rom_file = dir / "dummy.gba";
-        {
-            std::ofstream out(rom_file, std::ios::binary);
-            out << "fake-rom";
-        }
+        write_dummy_rom(rom_file, 'A');
         assert(emu.load_rom(rom_file.string()));
 
         emu.step_one_frame();
@@ -177,10 +184,7 @@ int main() {
         // A different ROM must not pick up another ROM's saves.
         EmulatorInstance other(nullptr, nullptr);
         const auto other_rom = dir / "other.gba";
-        {
-            std::ofstream out(other_rom, std::ios::binary);
-            out << "different-rom";
-        }
+        write_dummy_rom(other_rom, 'Z');
         assert(other.load_rom(other_rom.string()));
         assert(other.load_slots_from_dir(dir / "saves"));
         assert(other.list_save_slots().empty());

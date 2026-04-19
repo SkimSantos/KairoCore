@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
@@ -39,7 +40,13 @@ std::string make_temp_rom() {
     ::close(fd);
     const std::string path(path_buf);
     std::ofstream out(path, std::ios::binary);
-    out.write("fake rom", 8);
+    // The cart loader requires at least a 192-byte header — a shorter
+    // file is rejected as not-a-cart. Zero-fill is enough; the
+    // complement byte doesn't have to validate, it's only a flag.
+    char rom[192] = {};
+    const char marker[] = "fake rom";
+    for (std::size_t i = 0; i < sizeof(marker) - 1; ++i) rom[i] = marker[i];
+    out.write(rom, sizeof(rom));
     return path;
 }
 

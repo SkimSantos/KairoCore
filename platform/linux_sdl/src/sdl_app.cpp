@@ -71,8 +71,14 @@ SdlApp::~SdlApp() {
 }
 
 int SdlApp::run(const std::string& rom_path) {
-    if (!rom_path.empty() && !emulator_->load_rom(rom_path)) {
-        SDL_Log("Failed to load ROM: %s", rom_path.c_str());
+    if (!rom_path.empty()) {
+        if (emulator_->load_rom(rom_path)) {
+            SDL_Log("ROM loaded: %s", rom_path.c_str());
+        } else {
+            SDL_Log("Failed to load ROM: %s", rom_path.c_str());
+        }
+    } else {
+        SDL_Log("No ROM path provided");
     }
 
     // Phase 4: try restoring per-game profile and persisted save slots.
@@ -126,13 +132,13 @@ int SdlApp::run(const std::string& rom_path) {
                     if (emulator_->is_running()) emulator_->pause();
                     else emulator_->run();
                     break;
-                case SDLK_RIGHTBRACKET:
+                case SDLK_l:
                     emulator_->set_fast_forward_multiplier(
                         emulator_->get_fast_forward_multiplier() + 1);
                     SDL_Log("fast-forward: %dx",
                             emulator_->get_fast_forward_multiplier());
                     break;
-                case SDLK_LEFTBRACKET:
+                case SDLK_k:
                     emulator_->set_fast_forward_multiplier(
                         emulator_->get_fast_forward_multiplier() - 1);
                     SDL_Log("fast-forward: %dx",

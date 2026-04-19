@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "backend/gba_system.hpp"
 #include "emulator/audio_sink.hpp"
 #include "emulator/debug_snapshot.hpp"
 #include "emulator/input_state.hpp"
@@ -109,6 +110,8 @@ private:
 
     bool debug_mode_ = false;
     std::vector<MemoryWatch> memory_watches_;
+
+    kairo::backend::GbaSystem system_;
 };
 
 } // namespace kairo::core

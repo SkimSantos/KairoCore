@@ -4,7 +4,6 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
-#include <functional>
 #include <system_error>
 #include <utility>
 
@@ -14,13 +13,14 @@ EmulatorInstance::EmulatorInstance(VideoSink* video_sink, AudioSink* audio_sink)
     : video_sink_(video_sink), audio_sink_(audio_sink) {}
 
 bool EmulatorInstance::load_rom(const std::string& path) {
-    std::ifstream f(path, std::ios::binary);
-    if (!f) {
+    // Delegate to the backend. A failed load leaves rom_id_ at 0 so
+    // save/profile paths skip persistence until a valid ROM is loaded.
+    if (!system_.load_rom(path)) {
         return false;
     }
-    // Phase 2: identify ROMs by path hash. Phase 3+ will hash the
-    // actual ROM content so renaming a file doesn't break save states.
-    rom_id_ = std::hash<std::string>{}(path);
+    // Phase 5: identify ROMs by their content hash. Renaming the file
+    // no longer breaks save states or profiles.
+    rom_id_ = system_.content_id();
     reset();
     return true;
 }
@@ -32,6 +32,7 @@ void EmulatorInstance::reset() {
     current_input_ = {};
     video_buffer_ = {};
     latched_input_.reset();
+    system_.reset();
 }
 
 void EmulatorInstance::run() { running_ = true; }
@@ -45,11 +46,18 @@ void EmulatorInstance::set_input_state(const InputState& input) {
 void EmulatorInstance::step_one_frame() {
     // Latched input is consumed on every step regardless of frame-step
     // mode, so a stray submit_input_for_next_frame() can't linger across
-    // a mode toggle. Phase 3 backend will read the applied input.
+    // a mode toggle.
     latched_input_.reset();
 
+    // Drive the backend for one frame's worth of cycles. The CPU is
+    // currently a no-op stub — once the interpreter lands, this is
+    // where games start running.
+    system_.run_frame();
+
     ++frame_number_;
-    render_test_pattern();
+
+    const auto& fb = system_.framebuffer();
+    video_buffer_.pixels = fb;
     video_buffer_.frame_number = frame_number_;
 
     if (video_sink_) {

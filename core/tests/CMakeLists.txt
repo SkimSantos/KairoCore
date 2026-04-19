@@ -5,7 +5,10 @@ set(CORE_TESTS
     test_frame_step
     test_debug_snapshot
     test_game_profile
-    test_emulator_lifecycle)
+    test_cart_header
+    test_memory_bus
+    test_emulator_lifecycle
+    test_cpu)
 
 foreach(test_name ${CORE_TESTS})
     add_executable(${test_name} ${test_name}.cpp)
