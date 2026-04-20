@@ -410,8 +410,6 @@ void arm_block_transfer(Cpu& cpu, MemoryBus& bus, std::uint32_t instr) {
                     : base - static_cast<std::uint32_t>(count) * 4 + 4;
 
     std::uint32_t addr = start;
-    bool pc_in_list = (reg_list >> 15) & 1;
-
     for (int i = 0; i < 16; ++i) {
         if (!(reg_list & (1 << i))) continue;
         if (load) {
@@ -430,7 +428,8 @@ void arm_block_transfer(Cpu& cpu, MemoryBus& bus, std::uint32_t instr) {
         addr += 4;
     }
 
-    if (writeback && !(load && pc_in_list))
+    bool rn_in_list = (reg_list >> rn_idx) & 1;
+    if (writeback && !(load && rn_in_list))
         cpu.reg(rn_idx) = up
             ? base + static_cast<std::uint32_t>(count) * 4
             : base - static_cast<std::uint32_t>(count) * 4;

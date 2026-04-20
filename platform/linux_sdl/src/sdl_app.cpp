@@ -161,7 +161,7 @@ int SdlApp::run(const std::string& rom_path) {
                         }
                     }
                     break;
-                case SDLK_d:
+                case SDLK_m:
                     emulator_->set_debug_mode(!emulator_->is_debug_mode());
                     SDL_Log("debug mode: %s",
                             emulator_->is_debug_mode() ? "on" : "off");
@@ -201,7 +201,7 @@ int SdlApp::run(const std::string& rom_path) {
                     SDL_Log("volume: %d%%",
                             static_cast<int>(emulator_->get_volume() * 100.0f));
                     break;
-                case SDLK_m: {
+                case SDLK_v: {
                     const float current = emulator_->get_volume();
                     if (current > 0.0f) {
                         pre_mute_volume = current;

@@ -249,11 +249,11 @@ void bios_lz77_uncomp(Cpu& cpu, MemoryBus& bus, bool vram) {
                 for (int j = 0; j < length && written < decomp_size; ++j) {
                     std::uint8_t val;
                     if (vram) {
-                        std::size_t ref = out.size() - static_cast<std::size_t>(disp) + static_cast<std::size_t>(j);
+                        std::size_t ref = out.size() - static_cast<std::size_t>(disp);
                         val = out[ref];
                         out.push_back(val);
                     } else {
-                        val = bus.read8(dst - static_cast<std::uint32_t>(disp) + static_cast<std::uint32_t>(j));
+                        val = bus.read8(dst - static_cast<std::uint32_t>(disp));
                         bus.write8(dst, val);
                         ++dst;
                     }

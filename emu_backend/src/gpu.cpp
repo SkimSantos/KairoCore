@@ -443,20 +443,37 @@ void Gpu::composite_scanline(int line, std::uint16_t dc, const Io& io,
     bool use_windows = (dc & (dispcnt::WIN0_ENABLE | dispcnt::WIN1_ENABLE |
                               dispcnt::WINOBJ_ENABLE)) != 0;
 
+    std::uint16_t bldcnt   = io.raw16(io_reg::BLDCNT);
+    std::uint16_t bldalpha = io.raw16(io_reg::BLDALPHA);
+    std::uint16_t bldy_reg = io.raw16(io_reg::BLDY);
+
+    int blend_mode = (bldcnt >> 6) & 3;
+    int eva = bldalpha & 0x1F;
+    int evb = (bldalpha >> 8) & 0x1F;
+    int evy = bldy_reg & 0x1F;
+    if (eva > 16) eva = 16;
+    if (evb > 16) evb = 16;
+    if (evy > 16) evy = 16;
+
     for (int x = 0; x < kScreenWidth; ++x) {
         std::uint8_t wmask = use_windows ? window_mask(x, line, dc, io) : 0x3F;
 
-        // GBA draw order: for each priority 0-3, OBJ first then BGs in
-        // BG number order. First opaque hit wins.
-        std::uint32_t color = backdrop;
+        // Find top two layers by priority for alpha blending.
+        // layer_id: 0-3 = BG0-BG3, 4 = OBJ, 5 = backdrop
+        std::uint32_t top_color = backdrop;
+        std::uint8_t  top_prio = 5;
+        int           top_id = 5;
 
-        std::uint8_t best_prio = 5;
-        // Check OBJ layer (index 4)
+        std::uint32_t bot_color = backdrop;
+        int           bot_id = 5;
+
+        // Check OBJ layer
         if (wmask & (1 << 4)) {
             const auto& obj = layers_[4][x];
-            if (obj.priority < best_prio) {
-                best_prio = obj.priority;
-                color = obj.color;
+            if (obj.priority < top_prio) {
+                top_prio = obj.priority;
+                top_color = obj.color;
+                top_id = 4;
             }
         }
 
@@ -464,9 +481,56 @@ void Gpu::composite_scanline(int line, std::uint16_t dc, const Io& io,
         for (int bg = 0; bg < 4; ++bg) {
             if (!(wmask & (1 << bg))) continue;
             const auto& pe = layers_[bg][x];
-            if (pe.priority < best_prio) {
-                best_prio = pe.priority;
-                color = pe.color;
+            if (pe.priority < top_prio) {
+                bot_color = top_color;
+                bot_id = top_id;
+                top_prio = pe.priority;
+                top_color = pe.color;
+                top_id = bg;
+            } else if (pe.priority < 5) {
+                bot_color = pe.color;
+                bot_id = bg;
+            }
+        }
+
+        // If OBJ was not the winner, it could be the second layer.
+        if (top_id != 4 && (wmask & (1 << 4))) {
+            const auto& obj = layers_[4][x];
+            if (obj.priority < 5 && obj.priority >= top_prio) {
+                bot_color = obj.color;
+                bot_id = 4;
+            }
+        }
+
+        bool bld_enabled = (wmask & (1 << 5)) != 0;
+        bool top_is_1st = (bldcnt & (1 << top_id)) != 0;
+        bool bot_is_2nd = (bldcnt & (1 << (8 + bot_id))) != 0;
+
+        std::uint32_t color = top_color;
+
+        if (bld_enabled && top_is_1st) {
+            if (blend_mode == 1 && bot_is_2nd) {
+                int r1 = (top_color >> 16) & 0xFF, g1 = (top_color >> 8) & 0xFF, b1 = top_color & 0xFF;
+                int r2 = (bot_color >> 16) & 0xFF, g2 = (bot_color >> 8) & 0xFF, b2 = bot_color & 0xFF;
+                int r = (r1 * eva + r2 * evb) / 16; if (r > 255) r = 255;
+                int g = (g1 * eva + g2 * evb) / 16; if (g > 255) g = 255;
+                int b = (b1 * eva + b2 * evb) / 16; if (b > 255) b = 255;
+                color = 0xFF000000u | (static_cast<std::uint32_t>(r) << 16) |
+                        (static_cast<std::uint32_t>(g) << 8) | static_cast<std::uint32_t>(b);
+            } else if (blend_mode == 2) {
+                int r = (top_color >> 16) & 0xFF, g = (top_color >> 8) & 0xFF, b = top_color & 0xFF;
+                r += (255 - r) * evy / 16;
+                g += (255 - g) * evy / 16;
+                b += (255 - b) * evy / 16;
+                color = 0xFF000000u | (static_cast<std::uint32_t>(r) << 16) |
+                        (static_cast<std::uint32_t>(g) << 8) | static_cast<std::uint32_t>(b);
+            } else if (blend_mode == 3) {
+                int r = (top_color >> 16) & 0xFF, g = (top_color >> 8) & 0xFF, b = top_color & 0xFF;
+                r -= r * evy / 16;
+                g -= g * evy / 16;
+                b -= b * evy / 16;
+                color = 0xFF000000u | (static_cast<std::uint32_t>(r) << 16) |
+                        (static_cast<std::uint32_t>(g) << 8) | static_cast<std::uint32_t>(b);
             }
         }
 

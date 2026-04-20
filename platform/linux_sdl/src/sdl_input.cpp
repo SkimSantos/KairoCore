@@ -6,14 +6,14 @@ namespace kairo::linux_sdl {
 
 SdlInput::SdlInput() {
     using kairo::platform::InputAction;
-    mapper_.set_binding(InputAction::up,     SDL_SCANCODE_UP);
-    mapper_.set_binding(InputAction::down,   SDL_SCANCODE_DOWN);
-    mapper_.set_binding(InputAction::left,   SDL_SCANCODE_LEFT);
-    mapper_.set_binding(InputAction::right,  SDL_SCANCODE_RIGHT);
+    mapper_.set_binding(InputAction::up,     SDL_SCANCODE_W);
+    mapper_.set_binding(InputAction::down,   SDL_SCANCODE_S);
+    mapper_.set_binding(InputAction::left,   SDL_SCANCODE_A);
+    mapper_.set_binding(InputAction::right,  SDL_SCANCODE_D);
     mapper_.set_binding(InputAction::a,      SDL_SCANCODE_Z);
     mapper_.set_binding(InputAction::b,      SDL_SCANCODE_X);
-    mapper_.set_binding(InputAction::l,      SDL_SCANCODE_A);
-    mapper_.set_binding(InputAction::r,      SDL_SCANCODE_S);
+    mapper_.set_binding(InputAction::l,      SDL_SCANCODE_Q);
+    mapper_.set_binding(InputAction::r,      SDL_SCANCODE_E);
     mapper_.set_binding(InputAction::start,  SDL_SCANCODE_RETURN);
     mapper_.set_binding(InputAction::select, SDL_SCANCODE_BACKSPACE);
 }
